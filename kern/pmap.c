@@ -268,6 +268,13 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
+	for(int i = 0; i < NCPU; i++){
+		boot_map_region(kern_pgdir,
+						KSTACKTOP -  KSTKSIZE - i * (KSTKSIZE + KSTKGAP),
+						KSTKSIZE,
+						PADDR(percpu_kstacks[i]),
+						PTE_W);
+	}
 
 }
 
@@ -308,17 +315,20 @@ page_init(void)
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
 	size_t i;
-	for (i = 0; i < npages; i++) {
+	for (i = 0; i < npages; i++)
 		if(i == 0)
-			{	pages[i].pp_ref = 1;
+		{	pages[i].pp_ref = 1;
 				pages[i].pp_link = NULL;
-			}
-		else if(i>=1 && i<npages_basemem)
-		{
-			pages[i].pp_ref = 0;
-			pages[i].pp_link = page_free_list; 
-			page_free_list = &pages[i];
+		}else if(i == MPENTRY_PADDR / PGSIZE){
+			pages[i].pp_ref = 1;
+			pages[i].pp_link = NULL;
 		}
+	//	else if(i>=1 && i<npages_basemem)
+	//	{
+	//		pages[i].pp_ref = 0;
+	//		pages[i].pp_link = page_free_list; 
+	//		page_free_list = &pages[i];
+	//	}
 		else if(i>=IOPHYSMEM/PGSIZE && i< EXTPHYSMEM/PGSIZE )
 		{
 			pages[i].pp_ref = 1;
@@ -337,7 +347,6 @@ page_init(void)
 			page_free_list = &pages[i];
 		}
 
-	}
 }
 
 //
@@ -598,7 +607,6 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// value will be preserved between calls to mmio_map_region
 	// (just like nextfree in boot_alloc).
 	static uintptr_t base = MMIOBASE;
-
 	// Reserve size bytes of virtual memory starting at base and
 	// map physical pages [pa,pa+size) to virtual addresses
 	// [base,base+size).  Since this is device memory and not
@@ -617,7 +625,11 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	size = ROUNDUP(pa+size,PGSIZE);
+	if(base+size >= MMIOLIM)panic("mmio_map_region: out of memory!\n");
+	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD| PTE_PWT | PTE_W);
+	base += size;
+	return (void*)(base-size);
 }
 
 static uintptr_t user_mem_check_addr;
