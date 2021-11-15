@@ -106,7 +106,7 @@ boot_alloc(uint32_t n)
 	//
 	// LAB 2: Your code here.
 	result = nextfree;
-	nextfree = ROUNDUP(result + n, PGSIZE);
+	nextfree = ROUNDUP((char *)result + n, PGSIZE);
 	return result;
 }
 
@@ -323,12 +323,12 @@ page_init(void)
 			pages[i].pp_ref = 1;
 			pages[i].pp_link = NULL;
 		}
-	//	else if(i>=1 && i<npages_basemem)
-	//	{
-	//		pages[i].pp_ref = 0;
-	//		pages[i].pp_link = page_free_list; 
-	//		page_free_list = &pages[i];
-	//	}
+		else if(i>=1 && i<npages_basemem)
+		{
+			pages[i].pp_ref = 0;
+			pages[i].pp_link = page_free_list; 
+			page_free_list = &pages[i];
+		}
 		else if(i>=IOPHYSMEM/PGSIZE && i< EXTPHYSMEM/PGSIZE )
 		{
 			pages[i].pp_ref = 1;
@@ -626,6 +626,7 @@ mmio_map_region(physaddr_t pa, size_t size)
 	//
 	// Your code here:
 	size = ROUNDUP(pa+size,PGSIZE);
+	size -= pa;
 	if(base+size >= MMIOLIM)panic("mmio_map_region: out of memory!\n");
 	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD| PTE_PWT | PTE_W);
 	base += size;
