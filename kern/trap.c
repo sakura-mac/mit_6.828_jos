@@ -87,8 +87,25 @@ trap_init(void)
 	void th13();
 	void th14();
 	void th16();
+	
+	void th32();
+	void th33();
+	void th34();
+	void th35();
+	void th36();
+	void th37();
+	void th38();
+	void th39();
+	void th40();
+	void th41();
+	void th42();
+	void th43();
+	void th44();
+	void th45();
+	void th46();
+	void th47();
 	void th_syscall();
-	SETGATE(idt[0], 0, GD_KT, th0, 0);		
+	SETGATE(idt[0], 0, GD_KT, th0, 0);	//SETGATE(gate, istrap, sel, off, dpl)	
 	SETGATE(idt[1], 0, GD_KT, th1, 0);  
 	SETGATE(idt[3], 0, GD_KT, th3, 3);
 	SETGATE(idt[4], 0, GD_KT, th4, 0);
@@ -103,7 +120,23 @@ trap_init(void)
 	SETGATE(idt[13], 0, GD_KT, th13, 0);
 	SETGATE(idt[14], 0, GD_KT, th14, 0);
 	SETGATE(idt[16], 0, GD_KT, th16, 0);
-
+	
+	SETGATE(idt[IRQ_OFFSET], 0, GD_KT, th32, 0);
+	SETGATE(idt[IRQ_OFFSET + 1], 0, GD_KT, th33, 0);
+	SETGATE(idt[IRQ_OFFSET + 2], 0, GD_KT, th34, 0);
+	SETGATE(idt[IRQ_OFFSET + 3], 0, GD_KT, th35, 0);
+	SETGATE(idt[IRQ_OFFSET + 4], 0, GD_KT, th36, 0);
+	SETGATE(idt[IRQ_OFFSET + 5], 0, GD_KT, th37, 0);
+	SETGATE(idt[IRQ_OFFSET + 6], 0, GD_KT, th38, 0);
+	SETGATE(idt[IRQ_OFFSET + 7], 0, GD_KT, th39, 0);
+	SETGATE(idt[IRQ_OFFSET + 8], 0, GD_KT, th40, 0);
+	SETGATE(idt[IRQ_OFFSET + 9], 0, GD_KT, th41, 0);
+	SETGATE(idt[IRQ_OFFSET + 10], 0, GD_KT, th42, 0);
+	SETGATE(idt[IRQ_OFFSET + 11], 0, GD_KT, th43, 0);
+	SETGATE(idt[IRQ_OFFSET + 12], 0, GD_KT, th44, 0);
+	SETGATE(idt[IRQ_OFFSET + 13], 0, GD_KT, th45, 0);
+	SETGATE(idt[IRQ_OFFSET + 14], 0, GD_KT, th46, 0);
+	SETGATE(idt[IRQ_OFFSET + 15], 0, GD_KT, th47, 0);
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, th_syscall, 3);	
 	
 	// Per-CPU setup 
@@ -236,7 +269,11 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
-
+	if(tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER){
+		lapic_eoi();
+		sched_yield();
+		return;
+	}
 	
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);

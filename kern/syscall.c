@@ -364,7 +364,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			ret = 0;
 			sys_yield();
 			break;
-        case SYS_exofork:
+        	case SYS_exofork:
 			ret = sys_exofork();
 			break;
 		case SYS_env_set_status:
@@ -372,7 +372,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			break;
 		case SYS_page_alloc:
 			ret = sys_page_alloc((envid_t)a1, (void *)a2, (int)a3);
-            break;
+            		break;
 		case SYS_page_map:
 			ret = sys_page_map((envid_t)a1, (void *)a2, (envid_t)a3, (void *)a4, (int)a5);
 			break;
