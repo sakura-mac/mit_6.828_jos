@@ -625,8 +625,7 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	size = ROUNDUP(pa+size,PGSIZE);
-	size -= pa;
+	size = ROUNDUP(size,PGSIZE);
 	if(base+size >= MMIOLIM)panic("mmio_map_region: out of memory!\n");
 	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD| PTE_PWT | PTE_W);
 	base += size;
@@ -657,7 +656,7 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-	cprintf("user_mem_check va: %x, len: %x\n", va, len);
+	//cprintf("user_mem_check va: %x, len: %x\n", va, len);
 	uint32_t start = (uint32_t) ROUNDDOWN(va, PGSIZE); 
 	uint32_t end = (uint32_t) ROUNDUP(va+len, PGSIZE);
 	for (uint32_t i = start; i < end; i += PGSIZE) {
@@ -667,7 +666,7 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 			return -E_FAULT;
 		}
 	}
-	cprintf("user_mem_check success va: %x, len: %x\n", va, len);
+	//cprintf("user_mem_check success va: %x, len: %x\n", va, len);
 	return 0;
 }
 

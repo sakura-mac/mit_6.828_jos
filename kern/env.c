@@ -377,7 +377,6 @@ load_icode(struct Env *e, uint8_t *binary)
 			memcpy((void *)ph[i].p_va, binary + ph[i].p_offset, ph[i].p_filesz); //不为0的部分
 		}
 	}
-
 	e->env_tf.tf_eip = ELF->e_entry;
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
