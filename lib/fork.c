@@ -107,33 +107,34 @@ envid_t
 fork(void)
 {
 	// LAB 4: Your code here.
-	int r;
-	envid_t envid;
-	int *addr;
-	//set up page fault handler
+	//1.set page fault handler
 	set_pgfault_handler(pgfault);
-	//create a child
-	envid = sys_exofork();//copy the tf:all reg
-	if(envid < 0)panic("fork: sys_exofork failed\n");
-	if(envid == 0){
-		thisenv = &envs[ENVX(sys_getenvid())];
-		return 0;//after parent set,child env now run
+	//2.create a child env	
+	envid_t envid = sys_exofork();//just the tf copy	
+	if (envid == 0) {//must after code below excuted
+		thisenv = &envs[ENVX(sys_getenvid())];//fix "thisenv" in the child process
+		return 0;
 	}
-	//copy space : COW,so just the map only:duppage function
-	for(addr = (int *)UTEXT; addr < (int *)USTACKTOP; addr += PGSIZE){
-		if((uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P))duppage(envid, PGNUM(addr));
+	if (envid < 0) {
+		panic("fork: sys_exofork: %e failed\n", envid);
 	}
-	//child's exception stack
-	r = sys_page_alloc(envid, (void *)UXSTACKTOP-PGSIZE, PTE_W | PTE_U | PTE_P);
-	if(r < 0)panic("fork: sys_page_alloc failed\n");
-	//child's page fault handler
-	extern void _pgfault_upcall();
-	r = sys_env_set_pgfault_upcall(envid, _pgfault_upcall);
-	if(r) panic("fork: sys_env_set_pgfault_upcall failed\n");
-	//set status = ENV_RUNNABLE
-	r = sys_env_set_status(envid, ENV_RUNNABLE);
-	if(r < 0)panic("fork: sys_env_set_status failed\n");
+	//COW mapping:duppage(envid, va's page):from 0 - USTACKTOP(under UTOP)
+	uint32_t addr;
+	for (addr = 0; addr < USTACKTOP; addr += PGSIZE)
+		if ((uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_U)) {
+			duppage(envid, PGNUM(addr));	//env already has page directory and page table
+		}
 
+	//child's exception stack
+	int r;
+	if ((r = sys_page_alloc(envid, (void *)(UXSTACKTOP-PGSIZE), PTE_P | PTE_W | PTE_U)) < 0)	
+		panic("sys_page_alloc: %e", r);
+	//set child's pgfault_upcall
+	extern void _pgfault_upcall(void);
+	sys_env_set_pgfault_upcall(envid, _pgfault_upcall);		
+	//runnable
+	if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)	 
+		panic("sys_env_set_status: %e", r);
 	return envid;
 	//panic("fork not implemented");
 }
