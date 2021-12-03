@@ -73,7 +73,7 @@ duppage(envid_t envid, unsigned pn)
 	void *addr = (void *) (pn * PGSIZE);
 	
 	uint32_t perm = pte&0xfff;
-	if(perm & (PTE_W | PTE_COW)){
+	if(perm & (PTE_W | PTE_COW) && !(perm & PTE_SHARE)){
 		perm &= ~PTE_W;
 		perm |= PTE_COW;
 	}
